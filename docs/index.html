@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard — Email Spam Detection Challenge 2026</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f8fa; color: #24292f; padding: 2rem; }
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+    .subtitle { color: #57606a; font-size: 14px; margin-bottom: 2rem; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 2rem; }
+    .stat { background: white; border: 1px solid #d0d7de; border-radius: 8px; padding: 1rem; }
+    .stat-label { font-size: 12px; color: #57606a; margin-bottom: 4px; }
+    .stat-value { font-size: 24px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #d0d7de; border-radius: 8px; overflow: hidden; }
+    th { background: #f6f8fa; font-size: 12px; color: #57606a; font-weight: 600; text-align: left; padding: 10px 16px; border-bottom: 1px solid #d0d7de; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    .bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .bar-bg { flex: 1; height: 8px; background: #eaeef2; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; background: #cf222e; }
+    .empty { text-align: center; padding: 3rem; color: #57606a; }
+    .updated { font-size: 12px; color: #57606a; margin-top: 1rem; text-align: right; }
+    .medal { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>📧 Email Spam Detection Challenge 2026</h1>
+  <p class="subtitle">Leaderboard — ranked by F1 Score — auto-updated on every submission</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Teams submitted</div>
+      <div class="stat-value" id="stat-teams">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Best F1 Score</div>
+      <div class="stat-value" id="stat-best">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Average F1 Score</div>
+      <div class="stat-value" id="stat-avg">—</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Group</th>
+        <th>F1 Score</th>
+        <th>Accuracy</th>
+        <th>Submitted</th>
+        <th>PR</th>
+      </tr>
+    </thead>
+    <tbody id="lb-body">
+      <tr><td colspan="6" class="empty">No submissions yet</td></tr>
+    </tbody>
+  </table>
+  <p class="updated" id="updated"></p>
+
+  <script>
+    const medals = ['🥇', '🥈', '🥉'];
+
+    fetch('leaderboard.json?v=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        const sorted = data.sort((a, b) => b.f1_score - a.f1_score);
+
+        if (sorted.length === 0) return;
+
+        const best = sorted[0].f1_score;
+        const avg  = (sorted.reduce((s, e) => s + e.f1_score, 0) / sorted.length).toFixed(4);
+
+        document.getElementById('stat-teams').textContent = sorted.length;
+        document.getElementById('stat-best').textContent  = best;
+        document.getElementById('stat-avg').textContent   = avg;
+
+        document.getElementById('lb-body').innerHTML = sorted.map((e, i) => `
+          <tr>
+            <td><span class="medal">${medals[i] || i + 1}</span></td>
+            <td><strong>${e.group}</strong></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg">
+                  <div class="bar-fill" style="width:${e.f1_score * 100}%"></div>
+                </div>
+                <span><strong>${e.f1_score}</strong></span>
+              </div>
+            </td>
+            <td>${e.accuracy}%</td>
+            <td>${e.date}</td>
+            <td><a href="../pull/${e.pr}">#${e.pr}</a></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('updated').textContent = 'Last updated: ' + new Date().toLocaleString();
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>
