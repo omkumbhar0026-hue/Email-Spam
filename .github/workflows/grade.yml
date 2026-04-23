@@ -65,17 +65,11 @@ jobs:
 
           lb = json.load(open(lb_path)) if os.path.exists(lb_path) else []
 
-          existing = next((e for e in lb if e["group"] == new["group"]), None)
-          if existing:
-              if new["f1_score"] > existing["f1_score"]:
-                  lb = [e for e in lb if e["group"] != new["group"]]
-                  lb.append(new)
-                  print(f"Updated {new['group']} to F1: {new['f1_score']}")
-              else:
-                  print(f"Kept better score for {new['group']}")
-          else:
-              lb.append(new)
-              print(f"Added {new['group']} with F1: {new['f1_score']}")
+          # FORCED UPDATE: This removes the previous entry for the group
+          # and adds the new one, even if the score is lower.
+          lb = [e for e in lb if e["group"] != new["group"]]
+          lb.append(new)
+          print(f"Forced update for {new['group']} with F1: {new['f1_score']}")
 
           with open(lb_path, "w") as f:
               json.dump(lb, f, indent=2)
@@ -101,5 +95,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🏆 Grading Result\n**Group:** ${group}\n\`\`\`\n${output}\n\`\`\`\n> Push a new commit to improve your score!`
+              body: `## 🏆 Grading Result\n**Group:** ${group}\n\`\`\`\n${output}\n\`\`\`\n> The leaderboard has been updated with your latest submission!`
             });
